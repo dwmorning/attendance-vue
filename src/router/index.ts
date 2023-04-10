@@ -93,27 +93,31 @@ const router = createRouter({
 })
 
 
-router.beforeEach((to,from,next)=>{
-  const token = (store.state as StateAll).users.token
-  const infos = (store.state as StateAll).users.infos
-  if(to.meta.auth && _.isEmpty(infos)){
+router.beforeEach((to, from, next)=>{
+  const token = (store.state as StateAll).users.token;
+  const infos = (store.state as StateAll).users.infos;
+  if( to.meta.auth && _.isEmpty(infos) ){
     if(token){
       store.dispatch('users/infos').then((res)=>{
-        if(res.data.ercode === 0){
-          store.commit('/users/updateInfos',res.data.infos)
+        if(res.data.errcode === 0){
+          store.commit('users/updateInfos', res.data.infos)
           next()
         }
-      })
-    }else{
-      next('/login')
+      });
     }
-  } else {
-    if(token && to.path === '/login'){
-      next('/')
-    } else {
-      next()
+    else{
+      next('/login');
     }
   }
+  else{
+    if( token && to.path === '/login' ){
+      next('/');
+    }
+    else{
+      next();
+    }
+  }
+
 })
 
 export default router
