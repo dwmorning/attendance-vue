@@ -47,7 +47,7 @@ const isDot = computed(()=> (newsInfo.value.applicant || newsInfo.value.approver
 const handleLogout = () => {
   store.commit('users/clearToken')
   setTimeout(()=>{
-    window.location.replace('/login')
+    window.location.replace('/#/login')
   }, 500)
 }
 const handleNavigate = (path: string) => {
