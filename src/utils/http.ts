@@ -1,6 +1,7 @@
 import axios from 'axios'
 import type { AxiosRequestConfig, AxiosResponse } from 'axios'
 import store from '@/store';
+import router from '@/router';
 import type { StateAll } from '@/store'
 import { ElMessage } from 'element-plus';
 import { AppConfig } from '@/providers/app-config'
@@ -26,6 +27,9 @@ instance.interceptors.response.use(function (response) {
     setTimeout(()=>{
       window.location.replace('/login');
     }, 1000)
+  }
+  else if(response.data.errmsg === 'error'){
+    router.push('/500');
   }
   return response;
 }, function (error) {
