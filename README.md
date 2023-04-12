@@ -1,4 +1,3 @@
-
 # 介绍
 
 本项目参考**某课**Vue3 + React18 + TS4 入门到实战，
@@ -13,6 +12,7 @@
 
     ![1681270987842](image/README/1681270987842.png)
   - 仅仅是https访问http的原因，没有其他安全问题。
+- attendance-vite-pinia分支为修改后的vite-pinia版本
 - 如上请求接口是某课提供的，某课的访问地址是[某课地址](http://vue.h5ke.top/login)
 
 # attendance-vue
@@ -40,4 +40,3 @@ npm run build
 ```
 npm run lint
 ```
-
