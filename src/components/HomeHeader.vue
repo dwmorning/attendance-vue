@@ -34,20 +34,25 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useStore } from '@/store';
 import { useRouter } from 'vue-router';
-const store = useStore();
-const router = useRouter();
-const head = computed(()=> store.state.users.infos.head)
-const name = computed(()=> store.state.users.infos.name)
+import { useUsersStore } from '@/stores/users';
+import { useNewsStore } from '@/stores/news';
+import { storeToRefs } from 'pinia';
 
-const newsInfo = computed(()=> store.state.news.info)
+const router = useRouter();
+const usersStore = useUsersStore()
+const newsStore = useNewsStore()
+const { infos } = storeToRefs(usersStore)
+const { info: newsInfo } = storeToRefs(newsStore)
+
+const head = computed(()=> infos.value.head)
+const name = computed(()=> infos.value.name)
 const isDot = computed(()=> (newsInfo.value.applicant || newsInfo.value.approver) as boolean)
 
 const handleLogout = () => {
-  store.commit('users/clearToken')
+  usersStore.clearToken()
   setTimeout(()=>{
-    window.location.replace('/#/login')
+    window.location.replace('/login')
   }, 500)
 }
 const handleNavigate = (path: string) => {

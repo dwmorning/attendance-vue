@@ -1,5 +1,5 @@
 <template>
- <el-descriptions border direction="vertical" :column="9">
+  <el-descriptions border direction="vertical" :column="9">
     <el-descriptions-item label="月份">{{ month }}月</el-descriptions-item>
     <el-descriptions-item v-for="value, key in DetailKey" :key="key" :label="value">
       {{ detailValue[key] }}
@@ -21,7 +21,7 @@
         </el-select>
       </el-space>
     </template>
-    <template #dateCell="{ data }">
+    <template #date-cell="{ data }">
       <div>{{ renderDate(data.day) }}</div>
       <div class="show-time">{{ renderTime(data.day) }}</div>
     </template>
@@ -30,16 +30,18 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watchEffect } from 'vue'
-import { useRouter } from 'vue-router';
-import { useStore } from '@/store';
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { toZero } from '@/utils/common'
+import { useUsersStore } from '@/stores/users';
+import { useSignsStore } from '@/stores/signs';
+import { storeToRefs } from 'pinia';
 
 const router = useRouter()
-const store = useStore()
-
-const signsInfos = computed(()=> store.state.signs.infos)
-const usersInfos = computed(()=> store.state.users.infos)
+const usersStore = useUsersStore()
+const signsStore = useSignsStore()
+const { infos: usersInfos } = storeToRefs(usersStore)
+const { infos: signsInfos } = storeToRefs(signsStore)
 
 const date = ref(new Date())
 const year = date.value.getFullYear()
@@ -62,16 +64,13 @@ const detailValue = reactive({
   early: 0,
   lateAndEarly: 0
 })
-
 const detailState = reactive({
   type: 'success' as 'success' | 'danger',
   text: '正常' as '正常' | '异常'
 })
 
 watchEffect((reset)=>{
-
   const detailMonth = ((signsInfos.value.detail as {[index: string]: unknown})[toZero(month.value)] as {[index: string]: unknown})
-
   for(const attr in detailMonth){
     switch( detailMonth[attr] ){
       case DetailKey.normal:
@@ -94,55 +93,47 @@ watchEffect((reset)=>{
         break
     }
   }
-
   for(const attr in detailValue){
     if( attr !== 'normal' && detailValue[attr as keyof typeof detailValue] !== 0){
       detailState.type = 'danger'
       detailState.text = '异常'
     }
   }
-
   reset(()=>{
     detailState.type = 'success'
     detailState.text = '正常'
-
     for(const attr in detailValue){
       detailValue[attr as keyof typeof detailValue] = 0
     }
-
   })
 })
 
+const handleChange = () => {
+  date.value = new Date(`${year}.${month.value}`)
+}
 const handleToException = () => {
   router.push({
     path: '/exception',
     query: { month: month.value }
   });
 }
-
-const handlePutTime = () =>{
-  store.dispatch('signs/putTime', {userid: usersInfos.value._id}).then((res)=>{
-    if(res.data.errcode === 0){
-      store.commit('signs/updateInfos', res.data.infos);
-      ElMessage.success('签到成功')
-    }
-  })
-}
-
-const handleChange = () =>{
-  date.value = new Date(`${year}.${month.value}`)
-}
-
 const renderDate = (day: string) => {
   return day.split('-')[2];
 }
-
 const renderTime = (day: string) => {
   const [, month, date] = day.split('-');
   const ret = ((signsInfos.value.time as {[index: string]: unknown})[month] as {[index: string]: unknown})[date];
   if( Array.isArray(ret) ){
     return ret.join('-')
   }
+}
+const handlePutTime = () => {
+  signsStore.putTimeAction({userid: usersInfos.value._id}).then((res)=>{
+    if(res.data.errcode === 0){
+      signsStore.updateInfos(res.data.infos) 
+      ElMessage.success('签到成功')
+    }
+  })
 }
 </script>
 

@@ -82,29 +82,27 @@
 
 <script setup lang="ts">
 import { computed, ref, reactive } from 'vue'
-import { useStore } from '@/store'
 import { ElMessage } from 'element-plus'
-import type {DateModelType, FormInstance, FormRules } from 'element-plus'
+import type { DateModelType, FormInstance, FormRules } from 'element-plus'
 import moment from 'moment'
+import { useUsersStore } from '@/stores/users'
+import { useChecksStore } from '@/stores/checks'
+import { useNewsStore } from '@/stores/news'
+import { storeToRefs } from 'pinia'
+import type { PostApply as ApplyList } from '@/stores/checks'
 
-interface ApplyList {
-  applicantid: string,
-  applicantname: string,
-  approverid: string,
-  approvername: string,
-  note: string,
-  reason: string,
-  time: [DateModelType, DateModelType]
-}
+const usersStore = useUsersStore()
+const checksStore = useChecksStore()
+const newsStore = useNewsStore()
+const { infos: usersInfos } = storeToRefs(usersStore)
+const { applyList: checksApplyList } = storeToRefs(checksStore)
 
-const store = useStore()
 const defaultType = '全部'
 const approverType = ref(defaultType)
 const searchWord = ref('')
-const usersInfos = computed(()=> store.state.users.infos)
 const approver = computed(()=> usersInfos.value.approver as {[index: string]: unknown}[])
-const applyList = computed(()=> store.state.checks.applyList.filter((v)=> (v.state === approverType.value || defaultType === approverType.value) && (v.note as string).includes(searchWord.value)))
-const pageSize = ref(5)
+const applyList = computed(()=> checksApplyList.value.filter((v)=> (v.state === approverType.value || defaultType === approverType.value) && (v.note as string).includes(searchWord.value)))
+const pageSize = ref(2)
 const pageCurrent = ref(1)
 const dialogVisible = ref(false)
 
@@ -161,14 +159,14 @@ const submitForm = (formEl: FormInstance | undefined) => {
       ruleForm.approverid = (approver.value.find((v)=> v.name === ruleForm.approvername) as {[index: string]: unknown})._id as string;
       ruleForm.time[0] = moment(ruleForm.time[0]).format('YYYY-MM-DD hh:mm:ss')
       ruleForm.time[1] = moment(ruleForm.time[1]).format('YYYY-MM-DD hh:mm:ss')
-      store.dispatch('checks/postApply', ruleForm).then((res)=>{
+      checksStore.postApplyAction(ruleForm).then((res)=>{
         if(res.data.errcode === 0){
-          store.dispatch('checks/getApply', { applicantid: usersInfos.value._id }).then((res)=>{
+          checksStore.getApplyAction({ applicantid: usersInfos.value._id }).then((res)=>{
             if(res.data.errcode === 0){
-              store.commit('checks/updateApplyList', res.data.rets)
+              checksStore.updateApplyList(res.data.rets)
             }
           })
-          store.dispatch('news/putRemind', { userid: ruleForm.approverid, approver: true })
+          newsStore.putRemindAction({ userid: ruleForm.approverid, approver: true })
           ElMessage.success('添加审批成功')
           resetForm(ruleFormRef.value)
           handleClose()

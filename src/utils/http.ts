@@ -1,9 +1,9 @@
 import axios from 'axios'
 import type { AxiosRequestConfig, AxiosResponse } from 'axios'
-import store from '@/store';
-import router from '@/router';
-import type { StateAll } from '@/store'
+import { useUsersStore } from '@/stores/users';
+import { storeToRefs } from 'pinia';
 import { ElMessage } from 'element-plus';
+import router from '@/router';
 import { AppConfig } from '@/providers/app-config'
 
 const instance = axios.create({
@@ -13,7 +13,9 @@ const instance = axios.create({
 
 instance.interceptors.request.use(function (config) {
   if(config.headers){
-    config.headers.authorization = (store.state as StateAll).users.token;
+    const usersStore = useUsersStore()
+    const {token} = storeToRefs(usersStore)
+    config.headers.authorization = token.value;
   }
   return config;
 }, function (error) {
@@ -22,8 +24,9 @@ instance.interceptors.request.use(function (config) {
 
 instance.interceptors.response.use(function (response) {
   if(response.data.errmsg === 'token error'){
+    const usersStore = useUsersStore()
+    usersStore.clearToken()
     ElMessage.error('token error');
-    store.commit('users/clearToken');
     setTimeout(()=>{
       window.location.replace('/login');
     }, 1000)

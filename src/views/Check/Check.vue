@@ -36,32 +36,39 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useStore } from '@/store'
 import { ElMessage } from 'element-plus'
+import { useUsersStore } from '@/stores/users'
+import { useChecksStore } from '@/stores/checks'
+import { useNewsStore } from '@/stores/news'
+import { storeToRefs } from 'pinia'
 
-const store = useStore()
+const usersStore = useUsersStore()
+const checksStore = useChecksStore()
+const newsStore = useNewsStore()
+const { infos: usersInfos } = storeToRefs(usersStore)
+const { checkList: checksCheckList } = storeToRefs(checksStore)
+
 const defaultType = '全部'
 const approverType = ref(defaultType)
 const searchWord = ref('')
-const pageSize = ref(5)
+const pageSize = ref(2)
 const pageCurrent = ref(1)
 
-const usersInfos = computed(() => store.state.users.infos)
-const checkList = computed(() => store.state.checks.checkList.filter((v)=> (v.state === approverType.value || defaultType === approverType.value) && (v.note as string).includes(searchWord.value)))
+const checkList = computed(() => checksCheckList.value.filter((v)=> (v.state === approverType.value || defaultType === approverType.value) && (v.note as string).includes(searchWord.value)))
 const pageCheckList = computed(()=> checkList.value.slice((pageCurrent.value - 1)*pageSize.value, pageCurrent.value*pageSize.value))
 
 const handleChange = (value: number) => {
   pageCurrent.value = value;
 }
 const handlePutApply = (_id: string, state: '已通过' | '未通过', applicantid: string) => {
-  store.dispatch('checks/putApply', {_id, state}).then((res)=>{
+  checksStore.putApplyAction({_id, state}).then((res)=>{
     if(res.data.errcode === 0){
-      store.dispatch('checks/getApply', { approverid: usersInfos.value._id }).then((res)=>{
+      checksStore.getApplyAction({ approverid: usersInfos.value._id }).then((res)=>{
         if(res.data.errcode === 0){
-          store.commit('checks/updateCheckList', res.data.rets)
+          checksStore.updateCheckList(res.data.rets)
         }
       })
-      store.dispatch('news/putRemind', { userid: applicantid, applicant: true })
+      newsStore.putRemindAction({ userid: applicantid, applicant: true })
       ElMessage.success('审批成功')
     }
   })

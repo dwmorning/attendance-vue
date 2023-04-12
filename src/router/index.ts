@@ -1,7 +1,11 @@
-import { createRouter, createWebHashHistory, RouteRecordRaw } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
+import type { RouteRecordRaw } from 'vue-router'
+import { useUsersStore } from '@/stores/users'
+import { useSignsStore } from '@/stores/signs'
+import { useNewsStore } from '@/stores/news'
+import { useChecksStore } from '@/stores/checks'
+import { storeToRefs } from 'pinia';
 import _ from 'lodash'
-import store from '@/store'
-import type { StateAll } from '@/store'
 
 const Login = () => import('@/views/Login/Login.vue');
 const Home = () => import('@/views/Home/Home.vue');
@@ -46,22 +50,25 @@ const routes: Array<RouteRecordRaw> = [
           auth: true
         },
         async beforeEnter(to, from, next){
-          const usersInfos = (store.state as StateAll).users.infos;
-          const signsInfos = (store.state as StateAll).signs.infos;
-          const newsInfo = (store.state as StateAll).news.info;
-          if( _.isEmpty(signsInfos) ){
-            const res = await store.dispatch('signs/getTime', { userid: usersInfos._id })
+          const usersStore = useUsersStore()
+          const signsStore = useSignsStore()
+          const newsStore = useNewsStore()
+          const { infos: usersInfos } = storeToRefs(usersStore)
+          const { infos: signsInfos } = storeToRefs(signsStore)
+          const { info: newsInfo } = storeToRefs(newsStore)
+          if( _.isEmpty(signsInfos.value) ){
+            const res = await signsStore.getTimeAction({ userid: usersInfos.value._id })
             if(res.data.errcode === 0){
-              store.commit('signs/updateInfos', res.data.infos)
+              signsStore.updateInfos(res.data.infos)
             }
             else{
               return;
             }
           }
-          if( _.isEmpty(newsInfo) ){
-            const res = await store.dispatch('news/getRemind', { userid: usersInfos._id })
+          if( _.isEmpty(newsInfo.value) ){
+            const res = await newsStore.getRemindAction({ userid: usersInfos.value._id })
             if(res.data.errcode === 0){
-              store.commit('news/updateInfo', res.data.info)
+              newsStore.updateInfo(res.data.info)
             }
             else{
               return;
@@ -81,32 +88,36 @@ const routes: Array<RouteRecordRaw> = [
           auth: true,
         },
         async beforeEnter(to, from, next){
-          const usersInfos = (store.state as StateAll).users.infos;
-          const signsInfos = (store.state as StateAll).signs.infos;
-          const checksApplyList = (store.state as StateAll).checks.applyList;
-          const newsInfo = (store.state as StateAll).news.info;
-          if( _.isEmpty(signsInfos) ){
-            const res = await store.dispatch('signs/getTime', { userid: usersInfos._id })
+          const usersStore = useUsersStore()
+          const signsStore = useSignsStore()
+          const newsStore = useNewsStore()
+          const checksStore = useChecksStore()
+          const { infos: usersInfos } = storeToRefs(usersStore)
+          const { infos: signsInfos } = storeToRefs(signsStore)
+          const { info: newsInfo } = storeToRefs(newsStore)
+          const { applyList: checksApplyList } = storeToRefs(checksStore)        
+          if( _.isEmpty(signsInfos.value) ){
+            const res = await signsStore.getTimeAction({ userid: usersInfos.value._id })
             if(res.data.errcode === 0){
-              store.commit('signs/updateInfos', res.data.infos)
+              signsStore.updateInfos(res.data.infos)
             }
             else{
               return;
             }
           }
-          if( _.isEmpty(checksApplyList) ){
-            const res = await store.dispatch('checks/getApply', { applicantid: usersInfos._id })
+          if( _.isEmpty(checksApplyList.value) ){
+            const res = await checksStore.getApplyAction({ applicantid: usersInfos.value._id })
             if(res.data.errcode === 0){
-              store.commit('checks/updateApplyList', res.data.rets)
+              checksStore.updateApplyList(res.data.rets)
             }
             else{
               return;
             }
           }
-          if( _.isEmpty(newsInfo) ){
-            const res = await store.dispatch('news/getRemind', { userid: usersInfos._id })
+          if( _.isEmpty(newsInfo.value) ){
+            const res = await newsStore.getRemindAction({ userid: usersInfos.value._id })
             if(res.data.errcode === 0){
-              store.commit('news/updateInfo', res.data.info)
+              newsStore.updateInfo(res.data.info)
             }
             else{
               return;
@@ -126,22 +137,25 @@ const routes: Array<RouteRecordRaw> = [
           auth: true,
         },
         async beforeEnter(to, from, next){
-          const usersInfos = (store.state as StateAll).users.infos;
-          const checksApplyList = (store.state as StateAll).checks.applyList;
-          const newsInfo = (store.state as StateAll).news.info;
-          if( _.isEmpty(checksApplyList) ){
-            const res = await store.dispatch('checks/getApply', { applicantid: usersInfos._id })
+          const usersStore = useUsersStore()
+          const checksStore = useChecksStore()
+          const newsStore = useNewsStore()
+          const { infos: usersInfos } = storeToRefs(usersStore)
+          const { applyList: checksApplyList } = storeToRefs(checksStore)
+          const { info: newsInfo } = storeToRefs(newsStore)
+          if( _.isEmpty(checksApplyList.value) ){
+            const res = await checksStore.getApplyAction({ applicantid: usersInfos.value._id })
             if(res.data.errcode === 0){
-              store.commit('checks/updateApplyList', res.data.rets)
+              checksStore.updateApplyList(res.data.rets)
             }
             else{
               return;
             }
           }
-          if( newsInfo.applicant ){
-            const res = await store.dispatch('news/putRemind', { userid: usersInfos._id, applicant: false })
+          if( newsInfo.value.applicant ){
+            const res = await newsStore.putRemindAction({ userid: usersInfos.value._id, applicant: false })
             if(res.data.errcode === 0){
-              store.commit('news/updateInfo', res.data.info)
+              newsStore.updateInfo(res.data.info)
             }
             else{
               return;
@@ -161,29 +175,31 @@ const routes: Array<RouteRecordRaw> = [
           auth: true,
         },
         async beforeEnter(to, from, next){
-          const usersInfos = (store.state as StateAll).users.infos;
-          const checksCheckList = (store.state as StateAll).checks.checkList;
-          const newsInfo = (store.state as StateAll).news.info;
-          if( _.isEmpty(checksCheckList) ){
-            const res = await store.dispatch('checks/getApply', { approverid: usersInfos._id })
+          const usersStore = useUsersStore()
+          const checksStore = useChecksStore()
+          const newsStore = useNewsStore()
+          const { infos: usersInfos } = storeToRefs(usersStore)
+          const { checkList: checksCheckList } = storeToRefs(checksStore)
+          const { info: newsInfo } = storeToRefs(newsStore)
+          if( _.isEmpty(checksCheckList.value) ){
+            const res = await checksStore.getApplyAction({ approverid: usersInfos.value._id })
             if(res.data.errcode === 0){
-              store.commit('checks/updateCheckList', res.data.rets)
+              checksStore.updateCheckList(res.data.rets)
             }
             else{
               return;
             }
           }
-          if( newsInfo.approver ){
-            const res = await store.dispatch('news/putRemind', { userid: usersInfos._id, approver: false })
+          if( newsInfo.value.approver ){
+            const res = await newsStore.putRemindAction({ userid: usersInfos.value._id, approver: false })
             if(res.data.errcode === 0){
-              store.commit('news/updateInfo', res.data.info)
+              newsStore.updateInfo(res.data.info)
             }
             else{
               return;
             }
           }
-          next()
-          
+          next() 
         }
       }
     ]
@@ -215,18 +231,18 @@ const routes: Array<RouteRecordRaw> = [
 ]
 
 const router = createRouter({
-  history: createWebHashHistory(process.env.BASE_URL),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes
 })
 
 router.beforeEach((to, from, next)=>{
-  const token = (store.state as StateAll).users.token;
-  const infos = (store.state as StateAll).users.infos;
-  if( to.meta.auth && _.isEmpty(infos) ){
-    if(token){
-      store.dispatch('users/infos').then((res)=>{
+  const usersStore = useUsersStore()
+  const { token, infos } = storeToRefs(usersStore)
+  if( to.meta.auth && _.isEmpty(infos.value) ){
+    if(token.value){
+      usersStore.infosAction().then((res)=>{
         if(res.data.errcode === 0){
-          store.commit('users/updateInfos', res.data.infos)
+          usersStore.updateInfos(res.data.infos)
           if(res.data.infos.permission.includes(to.name)){
             next()
           }
@@ -234,21 +250,20 @@ router.beforeEach((to, from, next)=>{
             next('/403')
           }
         }
-      });
+      })
     }
     else{
       next('/login');
     }
   }
   else{
-    if( token && to.path === '/login' ){
+    if( token.value && to.path === '/login' ){
       next('/');
     }
     else{
       next();
     }
   }
-
 })
 
 export default router

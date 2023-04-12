@@ -40,20 +40,24 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useStore } from '@/store'
 import { toZero } from '@/utils/common'
+import { useSignsStore } from '@/stores/signs'
+import { useChecksStore } from '@/stores/checks'
+import { storeToRefs } from 'pinia'
 
 const route = useRoute()
 const router = useRouter()
-const store = useStore()
 
-const signsInfos = computed(() => store.state.signs.infos)
+const signsStore = useSignsStore()
+const checksStore = useChecksStore()
+const { infos: signsInfos } = storeToRefs(signsStore)
+const { applyList } = storeToRefs(checksStore)
 
 const date = new Date();
 const year = date.getFullYear();
 const month = ref( Number(route.query.month) || date.getMonth() + 1 )
 
-const applyListMonth = computed(() => store.state.checks.applyList.filter((v) => {
+const applyListMonth = computed(() => applyList.value.filter((v) => {
   const startTime = (v.time as string[])[0].split(' ')[0].split('-');
   const endTime = (v.time as string[])[1].split(' ')[0].split('-');
   return startTime[1] <= toZero(month.value) && endTime[1] >= toZero(month.value)

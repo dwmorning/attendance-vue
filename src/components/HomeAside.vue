@@ -17,20 +17,20 @@
 import _ from 'lodash'
 import { useRouter, useRoute } from 'vue-router';
 import type { RouteRecordName } from 'vue-router';
-import { useStore } from '@/store';
+import { useUsersStore } from '@/stores/users';
+import { storeToRefs } from 'pinia';
+
+const usersStore = useUsersStore()
+const { infos } = storeToRefs(usersStore)
 
 const router = useRouter();
 const route = useRoute();
-const store = useStore();
-const permission = store.state.users.infos.permission;
+const permission = infos.value.permission;
 
 const menus = _.cloneDeep(router.options.routes).filter((v)=> {
-
   v.children = v.children?.filter((v)=> v.meta?.menu && (permission as (RouteRecordName|undefined)[]).includes(v.name));
-
   return v.meta?.menu && (permission as (RouteRecordName|undefined)[]).includes(v.name);
 })
-
 
 </script>
 
